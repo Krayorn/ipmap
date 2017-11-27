@@ -1,6 +1,8 @@
 import argparse
 import asyncio.subprocess
 import asyncio
+import xmltodict
+import json
 from aiohttp import web
 
 def update_cache():
@@ -13,7 +15,7 @@ async def scan_nmap(to_scan):
     print("nmap -sV " + to_scan)
 
     process = await asyncio.create_subprocess_exec(
-        'nmap', '-sV', to_scan,
+        'nmap', '-sV', '-oX', '-', to_scan,
         stdout=asyncio.subprocess.PIPE)
 
     stdout, stderr = await process.communicate()
@@ -26,7 +28,7 @@ async def handle(request, cache):
     to_scan = request.match_info.get('toScan', "192.168.1.0")
 
     result = await scan_nmap(to_scan)
-    return web.Response(text=str(result))
+    return web.Response(text=str(json.dumps(xmltodict.parse(str(result)))))
 
 def main():
     cache = []
