@@ -20,7 +20,7 @@ async def scan_nmap(to_scan):
         'nmap', '-sV', to_scan,
         stdout=asyncio.subprocess.PIPE)
 
-    stdout, stderr = await process.communicate()
+    stdout, _ = await process.communicate()
 
     result = stdout.decode().strip()
     return result
@@ -42,6 +42,8 @@ async def handle(request, cache):
         if reg.match(first_ip):
             for i in range(int(start_ip), int(ip_to_reach)+1):
                 result += await scan_nmap(str(base_ip) + '.' + str(i)) + "\n\n"
+    else:
+         result += await scan_nmap(to_scan)
 
     # return web.Response(text=str(json.dumps(xmltodict.parse(str(result)))))
     return web.Response(text=str(result))
