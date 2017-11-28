@@ -1,8 +1,9 @@
 import argparse
 import asyncio.subprocess
 import asyncio
-import xmltodict
-import json
+# import xmltodict
+# import json
+import re
 from aiohttp import web
 
 def update_cache():
@@ -14,8 +15,9 @@ def check_cache():
 async def scan_nmap(to_scan):
     print("nmap -sV " + to_scan)
 
+    # '-oX', '-',,
     process = await asyncio.create_subprocess_exec(
-        'nmap', '-sV', '-oX', '-', to_scan,
+        'nmap', '-sV', to_scan,
         stdout=asyncio.subprocess.PIPE)
 
     stdout, stderr = await process.communicate()
@@ -27,8 +29,22 @@ async def scan_nmap(to_scan):
 async def handle(request, cache):
     to_scan = request.match_info.get('toScan', "192.168.1.0")
 
-    result = await scan_nmap(to_scan)
-    return web.Response(text=str(json.dumps(xmltodict.parse(str(result)))))
+    result = ''
+    reg = re.compile("^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$")
+    if '-' in to_scan:
+        first_last_ip = to_scan.split('-')
+        first_ip = first_last_ip[0]
+        base_ip = first_ip.split('.')
+        del base_ip[-1]
+        base_ip = '.'.join(base_ip)
+        start_ip = first_ip.split('.')[3]
+        ip_to_reach = first_last_ip[1]
+        if reg.match(first_ip):
+            for i in range(int(start_ip), int(ip_to_reach)+1):
+                result += await scan_nmap(str(base_ip) + '.' + str(i)) + "\n\n"
+
+    # return web.Response(text=str(json.dumps(xmltodict.parse(str(result)))))
+    return web.Response(text=str(result))
 
 def main():
     cache = []
