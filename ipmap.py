@@ -1,9 +1,9 @@
 import argparse
+import re
 import asyncio.subprocess
 import asyncio
 # import xmltodict
 # import json
-import re
 from aiohttp import web
 
 def update_cache():
@@ -24,7 +24,6 @@ async def scan_nmap(to_scan):
 
     result = stdout.decode().strip()
     return result
-
 
 async def handle(request, cache):
     to_scan = request.match_info.get('toScan', "192.168.1.0")
